@@ -108,8 +108,11 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		for (int j = 0; j < predicted.size(); j++) {
 			Map::single_landmark_s landmark = map_landmarks.landmark_list[j];
 
-			double x_pred = landmark.x_f * cos(particle.theta) - landmark.y_f * sin(particle.theta) + particle.x;
-			double y_pred = landmark.x_f * sin(particle.theta) + landmark.y_f * cos(particle.theta) + particle.y;
+			double sin_theta = sin(particle.theta);
+			double cos_theta = cos(particle.theta);
+
+			double x_pred = landmark.y_f*sin_theta + landmark.x_f*cos_theta;
+			double y_pred = landmark.y_f*cos_theta - landmark.x_f * sin_theta;
 
 			predicted[j].x = x_pred;
 			predicted[j].y = y_pred;
@@ -124,8 +127,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			// Find the probability of the observation
 
 			// First transform observation to map coordinates
-			double obs_x = particle.x + obs.x * cos(particle.theta);
-			double obs_y = particle.y = obs.y * sin(particle.theta);
+			double obs_x = obs.x * cos(particle.theta) - obs.y * sin(particle.theta) + particle.x;
+			double obs_y = obs.x * sin(particle.theta) + obs.y * cos(particle.theta) + particle.y;
 
 			// What's the probability that I make this observation?
 			double true_x = map_landmarks.landmark_list[obs.id-1].x_f;
