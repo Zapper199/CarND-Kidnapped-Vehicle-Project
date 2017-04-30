@@ -19,7 +19,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	//   x, y, theta and their uncertainties from GPS) and all weights to 1.
 	// Add random Gaussian noise to each particle.
 	// NOTE: Consult particle_filter.h for more information about this method (and others in this file).
-	num_particles = 100;
+	num_particles = 300;
 	particles.resize(num_particles);
 	weights.resize(num_particles, 0);
 
@@ -78,7 +78,6 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 				closestLandmark = prediction.id;
 			}
 		}
-
 		observation.id = closestLandmark;
 	}
 
@@ -109,11 +108,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		for (int j = 0; j < predicted.size(); j++) {
 			Map::single_landmark_s landmark = map_landmarks.landmark_list[j];
 
-			double x_diff = landmark.x_f - particle.x;
-			double y_diff = landmark.y_f - particle.y;
-
-			double x_pred = y_diff * sin(particle.theta) + x_diff * cos(particle.theta);
-			double y_pred = y_diff * cos(particle.theta) - x_diff * sin(particle.theta);
+			double x_pred = landmark.x_f * cos(particle.theta) - landmark.y_f * sin(particle.theta) + particle.x;
+			double y_pred = landmark.x_f * sin(particle.theta) + landmark.y_f * cos(particle.theta) + particle.y;
 
 			predicted[j].x = x_pred;
 			predicted[j].y = y_pred;
@@ -134,6 +130,9 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			// What's the probability that I make this observation?
 			double true_x = map_landmarks.landmark_list[obs.id-1].x_f;
 			double true_y = map_landmarks.landmark_list[obs.id-1].y_f;
+
+			// std::cout << "Y: " << true_y - obs_y << " " << true_y << " " << obs_y << std::endl;
+			// std::cout << "X: " << true_x - obs_x << " " << true_x << " " << obs_x << std::endl;
 
 			double obs_prob = (1/(2*M_PI*std_landmark[0]*std_landmark[1]))
 				* exp(-(((true_x - obs_x)*(true_x-obs_x))/(2*std_landmark[0]*std_landmark[0]))
