@@ -1,9 +1,6 @@
 # Overview
 This repository contains all the code needed to complete the final project for the Localization course in Udacity's Self-Driving Car Nanodegree.
 
-#### Submission
-All you will submit is your completed version of `particle_filter.cpp`, which is located in the `src` directory. You should probably do a `git pull` before submitting to verify that your project passes the most up-to-date version of the grading code (there are some parameters in `src/main.cpp` which govern the requirements on accuracy and run time.)
-
 ## Project Introduction
 Your robot has been kidnapped and transported to a new location! Luckily it has a map of this location, a (noisy) GPS estimate of its initial location, and lots of (noisy) sensor and control data.
 
@@ -38,12 +35,6 @@ Otherwise you might get
 Time step: 100
 Cumulative mean weighted error: x 39.8926 y 9.60949 yaw 0.198841
 Your x error, 39.8926 is larger than the maximum allowable error, 1
-```
-
-Your job is to build out the methods in `particle_filter.cpp` until the last line of output says:
-
-```
-Success! Your particle filter passed!
 ```
 
 # Implementing the Particle Filter
