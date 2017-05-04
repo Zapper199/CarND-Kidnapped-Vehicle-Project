@@ -19,9 +19,9 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	//   x, y, theta and their uncertainties from GPS) and all weights to 1.
 	// Add random Gaussian noise to each particle.
 	// NOTE: Consult particle_filter.h for more information about this method (and others in this file).
-	num_particles = 300;
+	num_particles = 200;
 	particles.resize(num_particles);
-	weights.resize(num_particles, 0);
+	weights.resize(num_particles, 1);
 
 	// Initialize all particles to this position
 	std::default_random_engine gen;
@@ -48,6 +48,7 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	//  http://www.cplusplus.com/reference/random/default_random_engine/
 
 	std::default_random_engine gen;
+
 	for (Particle &particle : particles) {
 		double x_f = particle.x + (velocity/yaw_rate) * (sin(particle.theta + yaw_rate * delta_t) - sin(particle.theta));
 		double y_f = particle.y + (velocity/yaw_rate) * (cos(particle.theta) - cos(particle.theta + yaw_rate * delta_t));
@@ -71,8 +72,10 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 	for (LandmarkObs &observation : observations) {
 		int closestLandmark;
 		double smallestDistance = DBL_MAX;
+
 		for (LandmarkObs &prediction : predicted) {
 			double distance = dist(observation.x, observation.y, prediction.x, prediction.y);
+
 			if (distance <= smallestDistance) {
 				smallestDistance = distance;
 				closestLandmark = prediction.id;
@@ -80,8 +83,6 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 		}
 		observation.id = closestLandmark;
 	}
-
-
 }
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
@@ -111,8 +112,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			double sin_theta = sin(particle.theta);
 			double cos_theta = cos(particle.theta);
 
-			double x_pred = landmark.y_f*sin_theta + landmark.x_f*cos_theta;
-			double y_pred = landmark.y_f*cos_theta - landmark.x_f * sin_theta;
+			double x_pred = (landmark.y_f-particle.y)*sin_theta + (landmark.x_f - particle.x)*cos_theta;
+			double y_pred = (landmark.y_f- particle.y)*cos_theta - (landmark.x_f - particle.x) * sin_theta;
 
 			predicted[j].x = x_pred;
 			predicted[j].y = y_pred;
@@ -122,8 +123,9 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		// Find closest landmarks for each observation
 		dataAssociation(predicted, observations);
 
+		double prob = 1;
 		// For each observation, find the error
-		for (LandmarkObs obs : observations) {
+		for (LandmarkObs &obs : observations) {
 			// Find the probability of the observation
 
 			// First transform observation to map coordinates
@@ -138,10 +140,13 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			// std::cout << "X: " << true_x - obs_x << " " << true_x << " " << obs_x << std::endl;
 
 			double obs_prob = (1/(2*M_PI*std_landmark[0]*std_landmark[1]))
-				* exp(-(((true_x - obs_x)*(true_x-obs_x))/(2*std_landmark[0]*std_landmark[0]))
-					+ (((true_y - obs_y)*(true_y-obs_y))/(2*std_landmark[1]*std_landmark[1])));
-			weights[i] *= obs_prob;
+				* exp(-(((true_x - obs_x)*(true_x-obs_x))/(2*std_landmark[0]*std_landmark[0])
+					+ ((true_y - obs_y)*(true_y-obs_y))/(2*std_landmark[1]*std_landmark[1])));
+
+			prob *= obs_prob;
 		}
+
+		weights[i] = prob;
 	}
 
 	// Normalize weights
@@ -167,8 +172,6 @@ void ParticleFilter::resample() {
 	}
 
 	particles = new_particles;
-
-
 }
 
 void ParticleFilter::write(std::string filename) {
